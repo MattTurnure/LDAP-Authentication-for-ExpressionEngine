@@ -110,7 +110,6 @@ class Nce_ldap_ext {
 		{
 			$this->EE->db->query($this->EE->db->insert_string('exp_extensions',
 				array(
-					'extension_id' => '',
 					'class'        => __CLASS__,
 					'method'       => $method,
 					'hook'         => $hook,
