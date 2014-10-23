@@ -52,17 +52,17 @@ class Nce_ldap_ext {
 	var $debug          = FALSE;
 
 // If you are looking here to edit the settings, you can always just change them in Extensions settings page :)
-	var $admin_email               = 'admin@your_site.com'; // Change your_site.com to your sites domain
-	var $from_email                = 'ldap@your_site.com'; // Change your_site.com to your sites domain
-	var $mail_host                 = 'your_mail_host'; // Change your_mail_host to name / ip address of your mail host
+	var $admin_email               = 'matt@mattturnure.com'; // Change your_site.com to your sites domain
+	var $from_email                = 'matt@mattturnure.com'; // Change your_site.com to your sites domain
+	var $mail_host                 = 'smtp.gmail.com'; // Change your_mail_host to name / ip address of your mail host
 	var $mail_message              = "This is an automated message from the ExpressionEngine LDAP authentication system.\n-------------------------\n\n{name} has just logged in for the first time. This has created an ExpressionEngine account for them using their LDAP details.\nTo complete their account details, please log in to http://{host} and update their member group, profile and 'people' weblog entry.\nTheir username is: {username}";
 	var $use_ldap_account_creation = 'yes';
-	var $ldap_host                 = 'ldap://your_ldap_host'; // Change your_ldap_host to name / ip address of your LDAP host
-	var $ldap_port                 = '389'; // Change if your LDAP port is different
-	var $ldap_search_base          = 'ldap_search_base'; // Change to your LDAP search base
-	var $ldap_search_user          = 'ldap_search_user'; // Change to your LDAP search user
-	var $ldap_search_password      = 'ldap_search_password'; // Change to your LDAP search password
-	var $ldap_username_attribute   = 'ldap_username_attribute'; // Change to your LDAP username attribute
+	var $ldap_host                 = 'ldap://10.1.5.14'; // Change your_ldap_host to name / ip address of your LDAP host
+	var $ldap_port                 = '3268'; // Change if your LDAP port is different
+	var $ldap_search_base          = 'DC=AVERITT,DC=local'; // Change to your LDAP search base
+	var $ldap_search_user          = 'CN=Web Manager,OU=No Restrictions,DC=AVERITT,DC=local'; // Change to your LDAP search user
+	var $ldap_search_password      = '1outhouse'; // Change to your LDAP search password
+	var $ldap_username_attribute   = 'sAMAccountName'; // Change to your LDAP username attribute
 	var $ldap_character_encode     = 'Windows-1252';
 	var $no_ldap_login_message     = 'LDAP authentication seems to be down at the moment. Please contact your administrator.';
 	var $first_time_login_message  = 'This is your first time logging in! Your account has been automatically created for you, but your administrator may still need to alter your settings. Please contact them if you require more access.';
@@ -243,7 +243,7 @@ class Nce_ldap_ext {
 	{
 			// Sync EE password to match LDAP (if account exists)
 			$this->EE->load->helper('security');
-			$encrypted_password = do_hash(stripslashes($user_info['password']));
+			$encrypted_password = hash('sha1',stripslashes($user_info['password']));
 			$sql = 'UPDATE exp_members SET password = \''.$this->EE->db->escape_str($encrypted_password).'\' WHERE username = \''.$this->EE->db->escape_str($user_info['username']).'\'';
 			$this->debug_print('Updating user with SQL: '.$sql);
 			$this->EE->db->query($sql);
@@ -274,13 +274,13 @@ class Nce_ldap_ext {
 			$data['screen_name']      = $user_info['cn'][0];
 			$data['username']         = $user_info['username'];
 			$data['password']         = $encrypted_password;
-			$data['email']            = $user_info['mail'][0];
+			$data['email']            = $user_info['username'].'@averittexpress.com';//$user_info['mail'][0];
 			$data['ip_address']       = '0.0.0.0';
 			$data['unique_id']        = $this->EE->functions->random('encrypt');
 			$data['join_date']        = $this->EE->localize->now;
 			$data['language']         = 'english';
 			$data['timezone']         = 'UTC';
-			$data['daylight_savings'] = 'n';
+			//$data['daylight_savings'] = 'n';
 			$data['time_format']      = 'eu';
 			$data['group_id']         = $this->settings['created_user_group'];
 
@@ -375,6 +375,8 @@ class Nce_ldap_ext {
 		$this->debug_print('Connecting to LDAP...');
 		$conn = ldap_connect($ldap_host, $ldap_port) or
 			die('Could not connect to host: '.$ldap_host.':'.$ldap_port.'<br/>'."\n");
+		ldap_set_option($conn, LDAP_OPT_REFERRALS, 0);
+		ldap_set_option($conn, LDAP_OPT_PROTOCOL_VERSION, 3);
 		$this->debug_print('connect result is '.$conn);
 
 		// Perform bind with search user
